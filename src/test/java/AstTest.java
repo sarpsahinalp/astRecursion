@@ -2,6 +2,7 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import de.tum.in.test.api.ast.model.JavaFile;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.Test;
@@ -35,9 +36,9 @@ public class AstTest {
     }
 
     @Test
-    void methodGraph() {
+    void testDetectSimpleRecursionWithGraph() {
         MethodCallGraph methodCallGraph = new MethodCallGraph();
-        List<CompilationUnit> asts = readFromDirectory(Path.of("C:\\Users\\sarps\\IdeaProjects\\astRecursion\\src\\main\\java\\org\\example"));
+        List<CompilationUnit> asts = readFromDirectory(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/SimpleRecursion"));
         try {
             for (CompilationUnit ast : asts) {
                 methodCallGraph.createGraph(ast);
@@ -47,7 +48,59 @@ public class AstTest {
         }
 
         CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isTrue();
+    }
+
+    @Test
+    void testDetectRecursionForComplex() {
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<CompilationUnit> asts = readFromDirectory(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/MoreComplexRecursion"));
+        try {
+            for (CompilationUnit ast : asts) {
+                methodCallGraph.createGraph(ast);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.err.println(methodCallGraph.getGraph().toString());
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isTrue();
+    }
+
+    @Test
+    void testDetectNoComplexRecursionAcrossClasses() {
+        // TODO Map classes with methods for duplicate method names otherwise it will fail
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<CompilationUnit> asts = readFromDirectory(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ComplexNoRecursion"));
+        try {
+            for (CompilationUnit ast : asts) {
+                methodCallGraph.createGraph(ast);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.err.println(methodCallGraph.getGraph().toString());
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
         assertThat(detector.detectCycles()).isFalse();
+    }
+
+    public static void main(String[] args) {
+        // Convert ComplexNoRecursionToDot
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<CompilationUnit> asts = readFromDirectory(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ComplexNoRecursion"));
+        try {
+            for (CompilationUnit ast : asts) {
+                methodCallGraph.createGraph(ast);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        methodCallGraph.exportToDotFile("ComplexNoRecursion.dot");
     }
 
     public static List<CompilationUnit> readFromDirectory(Path pathOfDirectory) {

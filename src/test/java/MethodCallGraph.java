@@ -16,6 +16,7 @@ public class MethodCallGraph {
     private final Graph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
     public void createGraph(CompilationUnit cu) throws FileNotFoundException {
+        // TODO custom more sophisticated visitor
 
         cu.accept(new VoidVisitorAdapter<>() {
             @Override
