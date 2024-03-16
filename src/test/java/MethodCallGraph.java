@@ -22,7 +22,9 @@ public class MethodCallGraph {
             @Override
             public void visit(MethodDeclaration md, Object arg) {
                 super.visit(md, arg);
+//                String className = ((ClassOrInterfaceDeclaration) md.getParentNode().get()).getNameAsString();
                 String methodName = md.getNameAsString();
+//                String vertexName = className + "." + methodName;
                 graph.addVertex(methodName);
                 md.findAll(MethodCallExpr.class).forEach(mce -> {
                     String callee = mce.getNameAsString();

@@ -1,5 +1,7 @@
 package org.example.ComplexNoRecursion;
 
+import java.util.Objects;
+
 public class Fifth {
 
     public void callSecond() {
@@ -13,6 +15,6 @@ public class Fifth {
     }
 
     public void callFourth() {
-        Fourth fourth = new Fourth();
+        Object fourth = new Fourth();
     }
 }

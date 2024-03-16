@@ -10,9 +10,4 @@ public class First {
     public void noRecursion() {
         System.out.println("No recursion");
     }
-
-    public static void main(String[] args) {
-        First first = new First();
-        first.callSecond();
-    }
 }

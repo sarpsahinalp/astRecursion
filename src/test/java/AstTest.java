@@ -2,7 +2,6 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
-import de.tum.in.test.api.ast.model.JavaFile;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.Test;
@@ -73,6 +72,7 @@ public class AstTest {
     void testDetectNoComplexRecursionAcrossClasses() {
         // TODO Map classes with methods for duplicate method names otherwise it will fail
         MethodCallGraph methodCallGraph = new MethodCallGraph();
+
         List<CompilationUnit> asts = readFromDirectory(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ComplexNoRecursion"));
         try {
             for (CompilationUnit ast : asts) {
