@@ -73,8 +73,7 @@ public class UnwantedNodesAssert extends AbstractAssert<UnwantedNodesAssert, Pat
     }
 
     /**
-     * Configures the language level used by the Java parser
-     *
+     * Excludes the main method from the AST
      * @return An unwanted node assertion object (for chaining)
      */
     public UnwantedNodesAssert excludeMainMethod() {

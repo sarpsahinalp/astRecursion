@@ -16,7 +16,9 @@ public class ExcludeMainTest {
     public static void noLoop() throws AssertionError{
         if(noLoopException == null) {
             try {
-                UnwantedNodesAssert.assertThatSourcesIn(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ExcludeMain")).withLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_17).hasNo(LoopType.ANY);
+                UnwantedNodesAssert.assertThatSourcesIn(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ExcludeMain"))
+                        .excludeMainMethod()
+                        .withLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_17).hasNo(LoopType.ANY);
                 noLoopException = Optional.empty();
             } catch (AssertionError ae){
                 noLoopException = Optional.of(ae);

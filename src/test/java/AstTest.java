@@ -1,14 +1,8 @@
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.*;
 import com.github.javaparser.utils.SourceRoot;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultEdge;
@@ -17,31 +11,31 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AstTest {
-    private static final PathMatcher JAVAFILEMATCHER = FileSystems.getDefault().getPathMatcher("glob:*.java");
 
     @Test
-    void renders() {
-        List<CompilationUnit> asts = readFromDirectory(Path.of("C:\\Users\\sarps\\IdeaProjects\\astRecursion\\src\\main\\java\\org\\example"));
-        System.out.println(asts);
-
-        // Return all method declarations from the asts
-        for (CompilationUnit ast : asts) {
-            List<MethodDeclaration> methodDeclarations = ast.findAll(MethodDeclaration.class);
-            for (MethodDeclaration methodDeclaration : methodDeclarations) {
-                System.out.println(methodDeclaration.findAll(MethodCallExpr.class));
+    void renders() throws IOException {
+        // Convert ComplexNoRecursionToDot
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example");
+        try {
+            for (Optional<CompilationUnit> ast : asts) {
+                if (ast.isPresent()) {
+                    methodCallGraph.createGraph(ast.get());
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        methodCallGraph.exportToDotFile("ComplexNoRecursion.dot");
     }
 
     @Test
@@ -84,7 +78,6 @@ public class AstTest {
 
     @Test
     void testDetectNoComplexRecursionAcrossClasses() throws IOException {
-        // TODO Map classes with methods for duplicate method names otherwise it will fail
         MethodCallGraph methodCallGraph = new MethodCallGraph();
 
         List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ComplexNoRecursion");
@@ -104,10 +97,10 @@ public class AstTest {
         assertThat(detector.detectCycles()).isFalse();
     }
 
-    public static void main(String[] args) throws IOException {
-        // Convert ComplexNoRecursionToDot
+    @Test
+    void testDetectRecursionDynamicDispatch() throws IOException {
         MethodCallGraph methodCallGraph = new MethodCallGraph();
-        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ComplexNoRecursion");
+        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/DynamicDispatch");
         try {
             for (Optional<CompilationUnit> ast : asts) {
                 if (ast.isPresent()) {
@@ -118,30 +111,63 @@ public class AstTest {
             e.printStackTrace();
         }
 
-        methodCallGraph.exportToDotFile("ComplexNoRecursion.dot");
+        System.err.println(methodCallGraph.getGraph().toString());
+
+        methodCallGraph.exportToDotFile("DynamicDispatch.dot");
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isTrue();
     }
 
-    public static List<CompilationUnit> readFromDirectory(Path pathOfDirectory) {
-        try (Stream<Path> directoryContentStream = Files.walk(pathOfDirectory)) {
-            return directoryContentStream.map(file -> {
-                if (!JAVAFILEMATCHER.matches(file.getFileName())) {
-                    return null;
+    @Test
+    void testDetectRecursionWithLambdas() throws IOException {
+        // TODO find a solution not working, since the method is registered as a lambda
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/Lambdas");
+        try {
+            for (Optional<CompilationUnit> ast : asts) {
+                if (ast.isPresent()) {
+                    methodCallGraph.createGraph(ast.get());
                 }
-                try {
-                    return StaticJavaParser.parse(file);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }).filter(Objects::nonNull).toList();
+            }
         } catch (IOException e) {
-            System.err.println("Error"); //$NON-NLS-1$
+            e.printStackTrace();
         }
-        return List.of();
+
+        System.err.println(methodCallGraph.getGraph().toString());
+
+        methodCallGraph.exportToDotFile("Lambdas.dot");
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isTrue();
+    }
+
+    @Test
+    void testDetectRecursionWithReflection() throws IOException {
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/ReflectionRecursion");
+        try {
+            for (Optional<CompilationUnit> ast : asts) {
+                if (ast.isPresent()) {
+                    methodCallGraph.createGraph(ast.get());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.err.println(methodCallGraph.getGraph().toString());
+
+        methodCallGraph.exportToDotFile("ReflectionRecursion.dot");
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isTrue();
     }
 
     public static List<Optional<CompilationUnit>> parseFromSourceRoot(String pathToSourceRoot) throws IOException {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());
+        combinedTypeSolver.add(new MemoryTypeSolver());
         combinedTypeSolver.add(new JavaParserTypeSolver(new File(pathToSourceRoot)));
         combinedTypeSolver.add(new ClassLoaderTypeSolver(MethodCallGraph.class.getClassLoader()));
 

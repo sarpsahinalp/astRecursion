@@ -1,5 +1,4 @@
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
@@ -10,28 +9,30 @@ import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.dot.DOTExporter;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class MethodCallGraph {
     private final Graph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
+    /**
+     * Create a graph from the given CompilationUnit
+     * @param cu CompilationUnit to be parsed
+     * @throws FileNotFoundException if the file is not found
+     */
     public void createGraph(CompilationUnit cu) throws FileNotFoundException {
-        // TODO custom more sophisticated visitor
-
         cu.accept(new VoidVisitorAdapter<>() {
             @Override
             public void visit(MethodDeclaration md, Object arg) {
                 super.visit(md, arg);
-                String className = ((ClassOrInterfaceDeclaration) md.getParentNode().get()).getNameAsString();
-                String methodName = md.getNameAsString();
-                String vertexName = className + "." + methodName;
+                String vertexName = md.resolve().getQualifiedName();
                 graph.addVertex(vertexName);
                 md.findAll(MethodCallExpr.class).forEach(mce -> {
-                    String calleeClassName = mce.resolve().getClassName();
-                    String callee = mce.getNameAsString();
-                    String calleeVertexName = calleeClassName + "." + callee;
+                    String calleeVertexName = mce.resolve().getQualifiedName();
                     graph.addVertex(calleeVertexName);
                     graph.addEdge(vertexName, calleeVertexName);
                 });
@@ -39,6 +40,10 @@ public class MethodCallGraph {
         }, null);
     }
 
+    /**
+     * Turn the graph into .dot file to visualize
+     * @param filePath path to be exported to
+     */
     public void exportToDotFile(String filePath) {
         DOTExporter<String, DefaultEdge> exporter = new DOTExporter<>();
         exporter.setVertexAttributeProvider((v) -> {
