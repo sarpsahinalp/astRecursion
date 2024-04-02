@@ -1,15 +1,20 @@
 strict digraph G {
-  1 [ label="org.example.Lambdas.MyFunction.apply" ];
-  2 [ label="org.example.Lambdas.RecursiveExample.performOperation" ];
-  3 [ label="org.example.Lambdas.RecursiveExample.Anonymous-476e9770-e28d-43d3-81a0-0abb8e67b9a1.apply" ];
-  4 [ label="java.io.PrintStream.println" ];
-  5 [ label="org.example.Lambdas.RecursiveExample.Anonymous-f0ddc6ef-1db0-41f4-9e1c-f82ce8a871cb.apply" ];
-  6 [ label="org.example.Lambdas.RecursiveExample.main" ];
+  1 [ label="org.example.Lambdas.MyFunction.apply#int" ];
+  2 [ label="org.example.Lambdas.RecursiveExample.performOperation#int, MyFunction" ];
+  3 [ label="org.example.Lambdas.RecursiveExample.Anonymous-49792b58-9e64-44f1-bf80-8b1ccb1c170d.apply#int" ];
+  4 [ label="java.io.PrintStream.println#int" ];
+  5 [ label="org.example.Lambdas.RecursiveExample.performOperation#int, org.example.Lambdas.RecursiveExample.Anonymous-e7439acf-60d2-46e4-9671-b405024ca05e" ];
+  6 [ label="org.example.Lambdas.RecursiveExample.Anonymous-3a588658-6bb8-49ec-af17-b8f1e778790a.apply#int" ];
+  7 [ label="org.example.Lambdas.RecursiveExample.performOperation#int, org.example.Lambdas.RecursiveExample.Anonymous-8f6e8d96-2d1d-47e4-ab28-00e1d38b2726" ];
+  8 [ label="org.example.Lambdas.RecursiveExample.main#String[]" ];
+  9 [ label="org.example.Lambdas.RecursiveExample.performOperation#int, org.example.Lambdas.MyFunction" ];
   2 -> 1;
   3 -> 4;
-  3 -> 2;
-  5 -> 4;
-  5 -> 2;
-  6 -> 2;
+  3 -> 5;
   6 -> 4;
+  6 -> 7;
+  8 -> 9;
+  8 -> 4;
+  8 -> 5;
+  8 -> 7;
 }

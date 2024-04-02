@@ -1,11 +1,13 @@
 strict digraph G {
-  1 [ label="org.example.ReflectionRecursion.Example.someMethod" ];
-  2 [ label="java.lang.Class.getMethod" ];
-  3 [ label="java.lang.Object.getClass" ];
-  4 [ label="java.lang.reflect.Method.invoke" ];
-  5 [ label="java.lang.Throwable.printStackTrace" ];
+  1 [ label="org.example.ReflectionRecursion.Example.someMethod#" ];
+  2 [ label="java.io.PrintStream.println#java.lang.String" ];
+  3 [ label="java.lang.Class.getMethod#java.lang.String" ];
+  4 [ label="java.lang.Object.getClass#" ];
+  5 [ label="java.lang.reflect.Method.invoke#org.example.ReflectionRecursion.Example" ];
+  6 [ label="java.lang.Throwable.printStackTrace#" ];
   1 -> 2;
   1 -> 3;
   1 -> 4;
   1 -> 5;
+  1 -> 6;
 }

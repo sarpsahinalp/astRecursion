@@ -10,12 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -186,6 +183,66 @@ public class AstTest {
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);
         System.out.println(duration / 1000000000.0 + "s");
+    }
+
+    @Test
+    void testOverloadedMethodsRecursion() throws IOException {
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/OverloadRecursion");
+        try {
+            for (Optional<CompilationUnit> ast : asts) {
+                if (ast.isPresent()) {
+                    methodCallGraph.createGraph(ast.get());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isTrue();
+    }
+
+    @Test
+    void testOverloadedMethodsNoRecursion() throws IOException {
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/OverloadedNoRecursion");
+        try {
+            for (Optional<CompilationUnit> ast : asts) {
+                if (ast.isPresent()) {
+                    methodCallGraph.createGraph(ast.get());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        methodCallGraph.exportToDotFile("OverloadedNoRecursion.dot");
+
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isFalse();
+    }
+
+    @Test
+    void testOverriddenMethodsRecursion() throws IOException {
+        MethodCallGraph methodCallGraph = new MethodCallGraph();
+        List<Optional<CompilationUnit>> asts = parseFromSourceRoot("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/OverriddenRecursion");
+        try {
+            for (Optional<CompilationUnit> ast : asts) {
+                if (ast.isPresent()) {
+                    methodCallGraph.createGraph(ast.get());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        methodCallGraph.exportToDotFile("OverriddenRecursion.dot");
+
+        CycleDetector<String, DefaultEdge> detector = new CycleDetector<>(methodCallGraph.getGraph());
+        assertThat(detector.detectCycles()).isTrue();
     }
 
     public static List<Optional<CompilationUnit>> parseFromSourceRoot(String pathToSourceRoot) throws IOException {

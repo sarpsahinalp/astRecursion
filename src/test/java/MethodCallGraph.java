@@ -1,7 +1,9 @@
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.nodeTypes.NodeWithType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MethodCallGraph {
     private final Graph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
@@ -29,15 +32,24 @@ public class MethodCallGraph {
             @Override
             public void visit(MethodDeclaration md, Object arg) {
                 super.visit(md, arg);
-                String vertexName = md.resolve().getQualifiedName();
+                String vertexName = md.resolve().getQualifiedName() + "#" + getParameterTypes(md);
                 graph.addVertex(vertexName);
                 md.findAll(MethodCallExpr.class).forEach(mce -> {
-                    String calleeVertexName = mce.resolve().getQualifiedName();
+                    //mce.getArguments().stream().map(argument -> argument.calculateResolvedType().describe()).toList();
+                    String calleeVertexName = mce.resolve().getQualifiedName() + "#" + getArgumentTypes(mce);
                     graph.addVertex(calleeVertexName);
                     graph.addEdge(vertexName, calleeVertexName);
                 });
             }
         }, null);
+    }
+
+    private String getParameterTypes(MethodDeclaration md) {
+        return md.getParameters().stream().map(NodeWithType::getTypeAsString).collect(Collectors.joining(", "));
+    }
+
+    private String getArgumentTypes(MethodCallExpr mce) {
+        return mce.getArguments().stream().map(argument -> argument.calculateResolvedType().describe()).collect(Collectors.joining(", "));
     }
 
     /**
