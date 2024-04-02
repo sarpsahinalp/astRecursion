@@ -9,7 +9,7 @@ do
     # Create the Java file with the class definition
     cat > "$class_name.java" <<EOF
 public class $class_name {
-    public void simpleMethod() {
+    public void simpleMethod(int n, double n2) {
         // Simple method implementation
         System.out.println("This is a simple method.");
     }
