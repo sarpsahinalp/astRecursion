@@ -1,0 +1,15 @@
+strict digraph G {
+  1 [ label="org.example.Lambdas.MyFunction.apply" ];
+  2 [ label="org.example.Lambdas.RecursiveExample.performOperation" ];
+  3 [ label="org.example.Lambdas.RecursiveExample.Anonymous-476e9770-e28d-43d3-81a0-0abb8e67b9a1.apply" ];
+  4 [ label="java.io.PrintStream.println" ];
+  5 [ label="org.example.Lambdas.RecursiveExample.Anonymous-f0ddc6ef-1db0-41f4-9e1c-f82ce8a871cb.apply" ];
+  6 [ label="org.example.Lambdas.RecursiveExample.main" ];
+  2 -> 1;
+  3 -> 4;
+  3 -> 2;
+  5 -> 4;
+  5 -> 2;
+  6 -> 2;
+  6 -> 4;
+}

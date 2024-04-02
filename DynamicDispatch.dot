@@ -1,0 +1,13 @@
+strict digraph G {
+  1 [ label="org.example.DynamicDispatch.Animal.speak" ];
+  2 [ label="org.example.DynamicDispatch.Dog.eat" ];
+  3 [ label="org.example.DynamicDispatch.Animal.recursiveCall" ];
+  4 [ label="org.example.DynamicDispatch.Dog.speak" ];
+  5 [ label="org.example.DynamicDispatch.Cat.speak" ];
+  6 [ label="org.example.DynamicDispatch.Cat.eat" ];
+  1 -> 2;
+  3 -> 2;
+  4 -> 1;
+  2 -> 3;
+  5 -> 1;
+}
