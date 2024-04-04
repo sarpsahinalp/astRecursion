@@ -7,6 +7,7 @@ import org.apiguardian.api.API;
 import org.apiguardian.api.API.Status;
 import org.assertj.core.api.AbstractAssert;
 
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -30,12 +31,19 @@ public class RecursionCheckAssert extends AbstractAssert<RecursionCheckAssert, P
      */
     private final LanguageLevel level;
 
-    private RecursionCheckAssert(Path path, LanguageLevel level) {
+    private final Method startingMethod;
+
+    private RecursionCheckAssert(Path path, LanguageLevel level, Method startingMethod) {
         super(requireNonNull(path), RecursionCheckAssert.class);
         this.level = level;
+        this.startingMethod = startingMethod;
         if (!Files.isDirectory(path)) {
             fail("The source directory %s does not exist", path); //$NON-NLS-1$
         }
+    }
+
+    private RecursionCheckAssert(Path path, LanguageLevel level) {
+        this(path, level, null);
     }
 
     /**
@@ -86,7 +94,7 @@ public class RecursionCheckAssert extends AbstractAssert<RecursionCheckAssert, P
     public RecursionCheckAssert withinPackage(String packageName) {
         Objects.requireNonNull(packageName, "The package name must not be null."); //$NON-NLS-1$
         var newPath = actual.resolve(Path.of("", packageName.split("\\."))); //$NON-NLS-1$ //$NON-NLS-2$
-        return new RecursionCheckAssert(newPath, level);
+        return new RecursionCheckAssert(newPath, level, startingMethod);
     }
 
     /**
@@ -96,7 +104,11 @@ public class RecursionCheckAssert extends AbstractAssert<RecursionCheckAssert, P
      * @return An unwanted simple recursion assertion object (for chaining)
      */
     public RecursionCheckAssert withLanguageLevel(LanguageLevel level) {
-        return new RecursionCheckAssert(actual, level);
+        return new RecursionCheckAssert(actual, level, startingMethod);
+    }
+
+    public RecursionCheckAssert startingWithMethod(Method node) {
+        return new RecursionCheckAssert(actual, level, node);
     }
 
     /**
@@ -108,9 +120,9 @@ public class RecursionCheckAssert extends AbstractAssert<RecursionCheckAssert, P
         if (level == null) {
             failWithMessage("The 'level' is not set. Please use UnwantedNodesAssert.withLanguageLevel(LanguageLevel)."); //$NON-NLS-1$
         }
-        Optional<String> errorMessage = RecursionCheck.hasNoCycle(actual, level);
+        Optional<String> errorMessage = RecursionCheck.hasNoCycle(actual, level, startingMethod);
         errorMessage.ifPresent(unwantedSimpleRecursionMessageForAllJavaFiles -> failWithMessage(
-                "Unwanted recursion found:" + System.lineSeparator() + unwantedSimpleRecursionMessageForAllJavaFiles)); //$NON-NLS-1$
+                "Unwanted recursion found in methods:" + System.lineSeparator() + unwantedSimpleRecursionMessageForAllJavaFiles)); //$NON-NLS-1$
         return this;
     }
 
@@ -123,7 +135,7 @@ public class RecursionCheckAssert extends AbstractAssert<RecursionCheckAssert, P
         if (level == null) {
             failWithMessage("The 'level' is not set. Please use UnwantedNodesAssert.withLanguageLevel(LanguageLevel)."); //$NON-NLS-1$
         }
-        Optional<String> errorMessage = RecursionCheck.hasCycle(actual, level);
+        Optional<String> errorMessage = RecursionCheck.hasCycle(actual, level, startingMethod);
         errorMessage.ifPresent(unwantedSimpleRecursionMessageForAllJavaFiles -> failWithMessage(
                 "Wanted recursion not found:" + System.lineSeparator() + unwantedSimpleRecursionMessageForAllJavaFiles)); //$NON-NLS-1$
         return this;
