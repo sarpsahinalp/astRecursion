@@ -9,6 +9,7 @@ import java.util.stream.*;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import javassist.bytecode.analysis.Type;
 import org.apiguardian.api.API;
 import org.apiguardian.api.API.Status;
 import org.slf4j.*;
@@ -34,16 +35,17 @@ public class JavaFile {
 
 	public JavaFile(Path javaFilePath, CompilationUnit javaFileAST, boolean excludeMainMethod) {
 		this.javaFilePath = javaFilePath;
-		if (excludeMainMethod)
+		if (excludeMainMethod) {
 			excludeMainMethod(javaFileAST);
+		}
 		this.javaFileAST = javaFileAST;
 	}
 
 	private static void excludeMainMethod(CompilationUnit javaFileAST) {
 		javaFileAST.findAll(MethodDeclaration.class)
 				.stream()
-				.filter(method -> method.getNameAsString().equals("main"))
-				.findFirst()
+				.filter(method -> method.isStatic() && method.getNameAsString().equals("main") && method.getParameters().size() == 1 && method.getType().isVoidType() && method.getParameter(0).getTypeAsString().equals("String[]"))
+				.findAny()
 				.ifPresent(Node::remove);
 	}
 

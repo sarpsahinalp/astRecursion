@@ -1,3 +1,4 @@
+import RecursionCheck.RecursionCheckAssert;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
@@ -245,6 +246,12 @@ public class AstTest {
         assertThat(detector.detectCycles()).isTrue();
     }
 
+    @Test
+    void testLambdas()throws IOException {
+        RecursionCheckAssert.assertThatSourcesIn(Path.of("/home/sarps/IdeaProjects/astRecursion/src/main/java/org/example/Lambdas"))
+                .withLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_17)
+                .hasNoRecursion();
+    }
     public static List<Optional<CompilationUnit>> parseFromSourceRoot(String pathToSourceRoot) throws IOException {
         CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
         combinedTypeSolver.add(new ReflectionTypeSolver());

@@ -1,4 +1,4 @@
-package org.example.Lambdas;
+package org.example.AnonymousFunc;
 
 interface MyFunction {
     void apply(int n);
