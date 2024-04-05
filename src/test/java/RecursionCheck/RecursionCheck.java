@@ -9,6 +9,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
+import org.apiguardian.api.API;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultEdge;
@@ -20,14 +21,12 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
+@API(status = API.Status.INTERNAL)
 public class RecursionCheck {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecursionCheck.class);
@@ -68,7 +67,6 @@ public class RecursionCheck {
 
         if (nodeName != null) {
             Graph<String, DefaultEdge> subgraph = MethodCallGraph.extractSubgraph(graph, nodeName);
-            MethodCallGraph.exportToDotFile("subgraph.dot", subgraph);
             return new CycleDetector<>(subgraph).findCycles();
         } else {
             return new CycleDetector<>(graph).findCycles();
