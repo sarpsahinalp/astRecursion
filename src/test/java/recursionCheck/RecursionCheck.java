@@ -1,4 +1,4 @@
-package RecursionCheck;
+package recursionCheck;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
@@ -9,6 +9,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
+import org.apiguardian.api.API;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultEdge;
@@ -28,82 +29,88 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
+@API(status = API.Status.INTERNAL)
 public class RecursionCheck {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecursionCheck.class);
 
     /**
      * Check if the startingNode has a recursive call
+     *
      * @param pathToSrcRoot Path to the source root
-     * @param level JavaParser Language Level
-     * @param startingNode Method to start the recursion check from, which may be {@code null}
+     * @param level         JavaParser Language Level
+     * @param startingNode  Method to start the recursion check from, which may be {@code null}
      * @return Optional.empty() if recursive call is detected, otherwise an error message
      */
-    public static Optional<String> hasCycle(Path pathToSrcRoot, ParserConfiguration.LanguageLevel level, Method startingNode) {
-        Graph<String, DefaultEdge> graph = createMethodCallGraph(pathToSrcRoot, level);
+    public static Optional<String> hasCycle(Path pathToSrcRoot, ParserConfiguration.LanguageLevel level, Method startingNode, Method... excludedMethods) {
+        MethodCallGraph graph = createMethodCallGraph(pathToSrcRoot, level, excludedMethods);
         return isNotEmpty(checkCycle(graph, startingNode)) ? Optional.empty() : Optional.of("No recursive call detected");
     }
 
     /**
      * Check if the startingNode has no recursive call
+     *
      * @param pathToSrcRoot Path to the source root
-     * @param level JavaParser Language Level
-     * @param startingNode Method to start the recursion check from, which may be {@code null}
+     * @param level         JavaParser Language Level
+     * @param startingNode  Method to start the recursion check from, which may be {@code null}
      * @return Optional.empty() if no recursive call is detected, otherwise an error message with methods in the detected cycle
      */
-    public static Optional<String> hasNoCycle(Path pathToSrcRoot, ParserConfiguration.LanguageLevel level, Method startingNode) {
-        Graph<String, DefaultEdge> graph = createMethodCallGraph(pathToSrcRoot, level);
+    public static Optional<String> hasNoCycle(Path pathToSrcRoot, ParserConfiguration.LanguageLevel level, Method startingNode, Method... excludedMethods) {
+        MethodCallGraph graph = createMethodCallGraph(pathToSrcRoot, level, excludedMethods);
         return checkCycle(graph, startingNode).stream().reduce((s1, s2) -> String.join(", ", s1, s2));
     }
 
     /**
      * Check if the graph has a cycle
-     * @param graph Method call graph
+     *
+     * @param graph        Method call graph
      * @param startingNode Method to start the recursion check from, which may be {@code null}
      * @return Set of methods in the detected cycle
      */
-    private static Set<String> checkCycle(Graph<String, DefaultEdge> graph, Method startingNode) {
+    private static Set<String> checkCycle(MethodCallGraph graph, Method startingNode) {
         // Convert Method to Node name
-        String nodeName = startingNode != null ? startingNode.getDeclaringClass().getName() + "." + startingNode.getName() + getParameters(startingNode) : null;
+        String nodeName = startingNode != null ? startingNode.getDeclaringClass().getName() + "." + startingNode.getName() + getParametersOfMethod(startingNode) : null;
 
         if (nodeName != null) {
-            Graph<String, DefaultEdge> subgraph = MethodCallGraph.extractSubgraph(graph, nodeName);
-            MethodCallGraph.exportToDotFile("subgraph.dot", subgraph);
+            Graph<String, DefaultEdge> subgraph = graph.extractSubgraph(nodeName);
             return new CycleDetector<>(subgraph).findCycles();
         } else {
-            return new CycleDetector<>(graph).findCycles();
+            return new CycleDetector<>(graph.getGraph()).findCycles();
         }
     }
 
     /**
      * Get the parameters of the method
+     *
      * @param method Method
      * @return String representation of the parameters
      */
-    private static String getParameters(Method method) {
+    public static String getParametersOfMethod(Method method) {
         return "(" + Arrays.stream(method.getParameters()).map(Parameter::getType).map(Class::getName).collect(Collectors.joining(", ")) + ")";
     }
 
     /**
      * Create a method call graph from the source root
+     *
      * @param pathToSrcRoot Path to the source root
-     * @param level JavaParser Language Level
+     * @param level         JavaParser Language Level
      * @return Method call graph
      */
-    public static Graph<String, DefaultEdge> createMethodCallGraph(Path pathToSrcRoot, ParserConfiguration.LanguageLevel level) {
-        MethodCallGraph methodCallGraph = new MethodCallGraph();
+    public static MethodCallGraph createMethodCallGraph(Path pathToSrcRoot, ParserConfiguration.LanguageLevel level, Method... excludedMethods) {
+        MethodCallGraph methodCallGraph = new MethodCallGraph(excludedMethods);
         List<Optional<CompilationUnit>> asts = parseFromSourceRoot(pathToSrcRoot, level);
         for (Optional<CompilationUnit> ast : asts) {
             ast.ifPresent(methodCallGraph::createGraph);
         }
 
-        return methodCallGraph.getGraph();
+        return methodCallGraph;
     }
 
     /**
      * Parse all Java files in the source root
+     *
      * @param pathToSourceRoot Path to the source root
-     * @param level JavaParser Language Level
+     * @param level            JavaParser Language Level
      * @return List of CompilationUnit
      */
     public static List<Optional<CompilationUnit>> parseFromSourceRoot(Path pathToSourceRoot, ParserConfiguration.LanguageLevel level) {
