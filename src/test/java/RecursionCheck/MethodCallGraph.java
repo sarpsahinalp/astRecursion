@@ -47,6 +47,12 @@ public class MethodCallGraph {
         }, null);
     }
 
+    /**
+     * Extract a subgraph from the given graph starting from the given vertex
+     * @param graph Graph to extract the subgraph from
+     * @param startVertex Vertex to start the extraction from
+     * @return Subgraph of the given graph
+     */
     public static Graph<String, DefaultEdge> extractSubgraph(Graph<String, DefaultEdge> graph, String startVertex) {
         DefaultDirectedGraph<String, DefaultEdge> subgraph = new DefaultDirectedGraph<>(null, graph.getEdgeSupplier(), false);
 
@@ -54,11 +60,19 @@ public class MethodCallGraph {
         subgraph.addVertex(startVertex);
 
         // Perform depth-first traversal to add reachable vertices and edges to the subgraph
+        // TODO search for more performant ways to extract the subgraph
         dfs(graph, startVertex, subgraph, new HashSet<>());
 
         return subgraph;
     }
 
+    /**
+     * Perform a depth-first search on the graph starting from the given vertex
+     * @param graph Graph to perform the search on
+     * @param vertex Vertex to start the search from
+     * @param subgraph Subgraph to add the vertices to
+     * @param visited Set of visited vertices
+     */
     private static void dfs(Graph<String, DefaultEdge> graph, String vertex, Graph<String, DefaultEdge> subgraph, Set<Object> visited) {
         visited.add(vertex);
 
@@ -95,6 +109,11 @@ public class MethodCallGraph {
         return "(" + mce.getArguments().stream().map(argument -> argument.calculateResolvedType().describe()).collect(Collectors.joining(", ")) + ")";
     }
 
+    /**
+     * Export the graph to a DOT file
+     * @param filePath Path to the DOT file
+     * @param graph Graph to be exported
+     */
     public static void exportToDotFile(String filePath, Graph<String, DefaultEdge> graph) {
         DOTExporter<String, DefaultEdge> exporter = new DOTExporter<>();
         exporter.setVertexAttributeProvider((v) -> {
